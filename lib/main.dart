@@ -1,5 +1,8 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:my_shopify/repository.dart';
+import 'package:my_shopify/list.dart';
+import 'package:my_shopify/detail.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,64 +16,110 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'My Shopify'),
+      home: const MyHomePage(),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  final String title;
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
 
-  const MyHomePage({super.key, required this.title});
+  @override
+  MyHomePageState createState() => MyHomePageState();
+}
+
+class MyHomePageState extends State<MyHomePage> {
+  List<ShopItem> items = List.empty();
+  List<ShopItem> itemsByCategory = List.empty();
+  List<Category> categoryList = List.empty();
+  final repository = RemoteShopDataSource();
+
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    repository.getShopItemList().then((itemList) => _getShopItemList(itemList));
+  }
+
+  //initial states
+  void _getShopItemList(List<ShopItem> itemList) {
+    setState(() {
+      items = itemList;
+      categoryList = getCategories(items);
+      itemsByCategory = getItemsByCategory(categoryList[0]);
+      isLoading = false;
+    });
+  }
+
+  List<ShopItem> getItemsByCategory(Category category) {
+    return items.where((element) => element.category == category.name).toList();
+  }
+
+  void setSelectCategory(Category selectedCategory) {
+    final updatedCategories = categoryList
+        .map((category) => Category(
+            name: category.name,
+            isSelected: category.name == selectedCategory.name))
+        .toList();
+    final updatedItemsByCategory = getItemsByCategory(selectedCategory);
+    setState(() {
+      categoryList = updatedCategories;
+      itemsByCategory = updatedItemsByCategory;
+    });
+  }
+
+  List<Category> getCategories(List<ShopItem> itemList) {
+    final categoryNames =
+        itemList.map((item) => item.category).toSet().toList();
+    return categoryNames
+        .mapIndexed(
+            (index, element) => Category(name: element, isSelected: index == 0))
+        .toList();
+  }
+
+  MyHomePageState();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title),
+        backgroundColor: Colors.white,
+        title: const Text("My Shopify"),
+        centerTitle: true,
       ),
-      body: const Column(
-        children: [
-          CategoryHorizontalList()
-        ],
-      ),
+      body: isLoading ? const Center(child: CircularProgressIndicator()) : ShopList(
+          items: items,
+          categoryList: categoryList,
+          childWidget: Column(
+            children: [
+              CategoryHorizontalList(onCategorySelected: setSelectCategory),
+              Expanded(child: ShopItemList(items: itemsByCategory))
+            ],
+          )),
     );
   }
 }
 
-class CategoryHorizontalList extends StatefulWidget {
+class ItemDetailPage extends StatelessWidget {
+  final ShopItem item;
 
-  const CategoryHorizontalList({super.key});
-
-  @override
-  CategoryListState createState() => CategoryListState();
-}
-
-class CategoryListState extends State<CategoryHorizontalList> {
-
-  List<String> categoryList = List.empty();
-  final repository = RemoteShopDataSource();
-
-  @override
-  void initState() {
-    super.initState();
-    repository.getShopItemList().then((itemList) =>
-      setData(itemList)
-    );
-  }
+  const ItemDetailPage({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
-    return Text("$categoryList");
-  }
-
-  void setData(List<ShopItem> list) {
-    setState(() {
-      categoryList = list.map((e) => e.category).toSet().toList();
-    });
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back, color: Colors.black)),
+        backgroundColor: Colors.white,
+        title: const Text("My Shopify"),
+      ),
+      body: ShopItemDetail(item: item),
+    );
   }
 }
