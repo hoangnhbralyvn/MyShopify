@@ -41,6 +41,8 @@ dependencies:
   get_it: ^7.6.0
   get:
   injectable:
+  flutter_bloc:
+  equatable:
 
 dev_dependencies:
   flutter_test:

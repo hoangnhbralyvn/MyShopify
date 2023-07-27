@@ -4,37 +4,18 @@ import 'package:my_shopify/main.dart';
 import '../model/category.dart';
 import '../model/shop_item.dart';
 
-class ShopList extends InheritedWidget {
-  final List<ShopItem> items;
-  final List<Category> categoryList;
-  final Widget childWidget;
-
-  const ShopList(
-      {super.key,
-      required this.items,
-      required this.categoryList,
-      required this.childWidget})
-      : super(child: childWidget);
-
-  @override
-  bool updateShouldNotify(ShopList oldWidget) {
-    return items != oldWidget.items || categoryList != oldWidget.categoryList;
-  }
-
-  static ShopList? of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<ShopList>();
-}
-
 class CategoryHorizontalList extends StatelessWidget {
   final Function onCategorySelected;
+  final List<Category> categoryList;
 
-  const CategoryHorizontalList({super.key, required this.onCategorySelected});
+  const CategoryHorizontalList({
+    super.key,
+    required this.onCategorySelected,
+    required this.categoryList
+  });
 
   @override
   Widget build(BuildContext context) {
-    final shopList = ShopList.of(context);
-    final List<Category> categoryList = shopList?.categoryList ?? List.empty();
-
     return Container(
       color: Colors.black,
       width: double.infinity,
@@ -47,7 +28,7 @@ class CategoryHorizontalList extends StatelessWidget {
               height: 50,
               margin: const EdgeInsets.only(left: 20, right: 20),
               child: GestureDetector(
-                  onTap: () => onCategorySelected(categoryList[position]),
+                  onTap: () => onCategorySelected(categoryList[position].name),
                   child: Center(
                       child: Text(
                         categoryList[position].name.toUpperCase(),
