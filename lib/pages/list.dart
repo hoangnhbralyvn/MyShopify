@@ -1,6 +1,8 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:my_shopify/main.dart';
+import 'package:my_shopify/router/app_router.dart';
 import '../model/category.dart';
 import '../model/shop_item.dart';
 
@@ -79,9 +81,7 @@ class ShopItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Route route =
-            MaterialPageRoute(builder: (context) => ItemDetailPage(item: item));
-        Navigator.push(context, route);
+        AutoRouter.of(context).push(ItemDetailRoute(item: item));
       },
       child: Container(
         padding: const EdgeInsets.all(14),
