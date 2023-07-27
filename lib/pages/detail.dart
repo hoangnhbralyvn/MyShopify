@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:my_shopify/repository.dart';
+import '../model/shop_item.dart';
 
 class ShopItemDetail extends StatelessWidget {
   final ShopItem item;

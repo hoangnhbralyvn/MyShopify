@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:my_shopify/repository.dart';
 import 'package:my_shopify/main.dart';
+import '../model/category.dart';
+import '../model/shop_item.dart';
 
 class ShopList extends InheritedWidget {
   final List<ShopItem> items;
   final List<Category> categoryList;
   final Widget childWidget;
 
-  final repository = RemoteShopDataSource();
-
-  ShopList(
+  const ShopList(
       {super.key,
       required this.items,
       required this.categoryList,
@@ -51,15 +50,20 @@ class CategoryHorizontalList extends StatelessWidget {
                   onTap: () => onCategorySelected(categoryList[position]),
                   child: Center(
                       child: Text(
-                    categoryList[position].name.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: categoryList[position].isSelected
+                        categoryList[position].name.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: categoryList[position].isSelected
                             ? Colors.amber
-                            : Colors.white),
-                  ))))),
+                            : Colors.white
+                        ),
+                      )
+                  )
+              )
+          )
+      ),
     );
   }
 }

@@ -38,6 +38,9 @@ dependencies:
   dio: ^5.3.0
   flutter_rating_bar: ^4.0.1
   simple_logger: ^1.9.0+2
+  get_it: ^7.6.0
+  get:
+  injectable:
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +52,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+  injectable_generator:
+  build_runner:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

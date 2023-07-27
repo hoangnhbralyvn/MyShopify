@@ -1,10 +1,15 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:my_shopify/repository.dart';
-import 'package:my_shopify/list.dart';
-import 'package:my_shopify/detail.dart';
+import 'package:my_shopify/pages/list.dart';
+import 'package:my_shopify/pages/detail.dart';
+import 'package:my_shopify/model/shop_item.dart';
+import 'package:my_shopify/model/category.dart';
+import 'package:my_shopify/repository/shop_repository.dart';
 
-void main() {
+import 'di/injection.dart';
+
+void main() async {
+  await configureDependencies();
   runApp(const MyApp());
 }
 
@@ -35,7 +40,8 @@ class MyHomePageState extends State<MyHomePage> {
   List<ShopItem> items = List.empty();
   List<ShopItem> itemsByCategory = List.empty();
   List<Category> categoryList = List.empty();
-  final repository = RemoteShopDataSource();
+
+  final repository = injector.get<ShopDataSource>();
 
   bool isLoading = true;
 
