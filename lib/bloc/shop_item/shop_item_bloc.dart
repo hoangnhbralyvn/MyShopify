@@ -9,12 +9,15 @@ class ShopItemBloc extends Bloc<ShopItemEvent, ShopItemState> {
   ShopItemBloc({required this.repository}) : super(ShopItemInitial()) {
     on<LoadShopItemList>(
       (event, emit) async {
-        final itemList = await repository.getShopItemList();
-
-        emit(ShopItemLoaded(
-            items: itemList,
-            selectCategory: itemList[0].category
-        ));
+        try {
+          final itemList = await repository.getShopItemList();
+          emit(ShopItemLoaded(
+              items: itemList,
+              selectCategory: itemList[0].category
+          ));
+        } catch (ex) {
+          emit(ShopItemError(exception: ex as Exception));
+        }
       },
     );
     on<UpdateShopItemByCategory>((event, emit) {

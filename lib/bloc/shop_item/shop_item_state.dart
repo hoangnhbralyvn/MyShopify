@@ -19,3 +19,9 @@ class ShopItemLoaded extends ShopItemState {
   @override
   List<Object> get props => [items, selectCategory];
 }
+
+class ShopItemError extends ShopItemState {
+  final Exception exception;
+
+  const ShopItemError({required this.exception});
+}
