@@ -1,34 +1,47 @@
-import 'package:collection/collection.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_shopify/bloc/shop_item/shop_item_bloc.dart';
+import 'package:my_shopify/bloc/shop_item/shop_item_event.dart';
 import 'package:my_shopify/pages/list.dart';
 import 'package:my_shopify/pages/detail.dart';
 import 'package:my_shopify/model/shop_item.dart';
 import 'package:my_shopify/model/category.dart';
 import 'package:my_shopify/repository/shop_repository.dart';
+import 'package:my_shopify/router/app_router.dart';
 
+import 'bloc/shop_item/shop_item_state.dart';
 import 'di/injection.dart';
 
 void main() async {
   await configureDependencies();
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+
+  MyApp({super.key});
+
+  final appRouter = AppRouter();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         useMaterial3: true,
       ),
-      home: const MyHomePage(),
+      routerDelegate: AutoRouterDelegate(
+        appRouter,
+        navigatorObservers: () => [AutoRouteObserver()],
+      ),
+      routeInformationParser: appRouter.defaultRouteParser(),
     );
   }
 }
 
+@RoutePage()
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
@@ -37,53 +50,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class MyHomePageState extends State<MyHomePage> {
-  List<ShopItem> items = List.empty();
-  List<ShopItem> itemsByCategory = List.empty();
-  List<Category> categoryList = List.empty();
 
   final repository = injector.get<ShopDataSource>();
 
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    repository.getShopItemList().then((itemList) => _getShopItemList(itemList));
+  List<ShopItem> getItemsByCategory(List<ShopItem> items, String category) {
+    return items.where((element) => element.category == category).toList();
   }
 
-  //initial states
-  void _getShopItemList(List<ShopItem> itemList) {
-    setState(() {
-      items = itemList;
-      categoryList = getCategories(items);
-      itemsByCategory = getItemsByCategory(categoryList[0]);
-      isLoading = false;
-    });
-  }
-
-  List<ShopItem> getItemsByCategory(Category category) {
-    return items.where((element) => element.category == category.name).toList();
-  }
-
-  void setSelectCategory(Category selectedCategory) {
-    final updatedCategories = categoryList
-        .map((category) => Category(
-            name: category.name,
-            isSelected: category.name == selectedCategory.name))
-        .toList();
-    final updatedItemsByCategory = getItemsByCategory(selectedCategory);
-    setState(() {
-      categoryList = updatedCategories;
-      itemsByCategory = updatedItemsByCategory;
-    });
-  }
-
-  List<Category> getCategories(List<ShopItem> itemList) {
+  List<Category> getCategories(List<ShopItem> itemList, String selectedCategory) {
     final categoryNames =
         itemList.map((item) => item.category).toSet().toList();
     return categoryNames
-        .mapIndexed(
-            (index, element) => Category(name: element, isSelected: index == 0))
+        .map((element) => Category(name: element, isSelected: element == selectedCategory))
         .toList();
   }
 
@@ -91,25 +69,58 @@ class MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text("My Shopify"),
-        centerTitle: true,
-      ),
-      body: isLoading ? const Center(child: CircularProgressIndicator()) : ShopList(
-          items: items,
-          categoryList: categoryList,
-          childWidget: Column(
-            children: [
-              CategoryHorizontalList(onCategorySelected: setSelectCategory),
-              Expanded(child: ShopItemList(items: itemsByCategory))
-            ],
-          )),
+    return MultiBlocProvider(
+        providers: [
+          BlocProvider(
+              create: (context) {
+                return ShopItemBloc(repository: repository)
+                  ..add(LoadShopItemList());
+              }
+          )
+        ],
+        child: Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              title: const Text("My Shopify"),
+              centerTitle: true,
+            ),
+            body: SafeArea(
+                child: BlocBuilder<ShopItemBloc, ShopItemState>(
+                  builder: (context, state) {
+                    if (state is ShopItemInitial) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is ShopItemLoaded) {
+
+                      final totalItems = state.items;
+                      final selectedCategory = state.selectCategory;
+
+                      return Column(
+                        children: [
+                          CategoryHorizontalList(
+                              categoryList: getCategories(totalItems, selectedCategory),
+                              onCategorySelected: (category) {
+                                context.read<ShopItemBloc>().add(UpdateShopItemByCategory(selectedCategory: category));
+                              }
+                          ),
+                          Expanded(
+                              child: ShopItemList(
+                                  items: getItemsByCategory(totalItems, selectedCategory)
+                              )
+                          )
+                        ],
+                      );
+                    } else {
+                      return const Center(child: Text('something went wrong'));
+                    }
+                  },
+                )
+            )
+        )
     );
   }
 }
 
+@RoutePage()
 class ItemDetailPage extends StatelessWidget {
   final ShopItem item;
 
@@ -120,7 +131,7 @@ class ItemDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => AutoRouter.of(context).pop(),
             icon: const Icon(Icons.arrow_back, color: Colors.black)),
         backgroundColor: Colors.white,
         title: const Text("My Shopify"),
