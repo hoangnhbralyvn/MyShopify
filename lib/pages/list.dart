@@ -1,18 +1,18 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:my_shopify/cubit/shop_item_cubit.dart';
 import 'package:my_shopify/main.dart';
 import 'package:my_shopify/router/app_router.dart';
 import '../model/category.dart';
 import '../model/shop_item.dart';
 
 class CategoryHorizontalList extends StatelessWidget {
-  final Function onCategorySelected;
   final List<Category> categoryList;
 
   const CategoryHorizontalList({
     super.key,
-    required this.onCategorySelected,
     required this.categoryList
   });
 
@@ -26,26 +26,31 @@ class CategoryHorizontalList extends StatelessWidget {
           shrinkWrap: true,
           itemCount: categoryList.length,
           scrollDirection: Axis.horizontal,
-          itemBuilder: (context, position) => Container(
-              height: 50,
-              margin: const EdgeInsets.only(left: 20, right: 20),
-              child: GestureDetector(
-                  onTap: () => onCategorySelected(categoryList[position].name),
-                  child: Center(
-                      child: Text(
-                        categoryList[position].name.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: categoryList[position].isSelected
-                            ? Colors.amber
-                            : Colors.white
-                        ),
-                      )
-                  )
-              )
-          )
+          itemBuilder: (context, position) {
+
+            final category = categoryList[position].name;
+
+            return Container(
+                height: 50,
+                margin: const EdgeInsets.only(left: 20, right: 20),
+                child: GestureDetector(
+                    onTap: () => context.read<ShopItemCubit>().updateShopCategory(category),
+                    child: Center(
+                        child: Text(
+                          categoryList[position].name.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: categoryList[position].isSelected
+                                  ? Colors.amber
+                                  : Colors.white
+                          ),
+                        )
+                    )
+                )
+            );
+          }
       ),
     );
   }
